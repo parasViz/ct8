@@ -61,8 +61,8 @@
 
         <div class="thinking-grid" aria-label="What Computational Thinking helps you do">
           <article class="thinking-card">
-            <div class="thinking-picture icon-decompose" aria-hidden="true">
-              <span></span><span></span><span></span><span></span>
+            <div class="thinking-picture icon-decompose">
+              <img src="assets/decompose-827.png" alt="827 decomposed into 800, 20, and 7" />
             </div>
             <h3>Decompose</h3>
             <p>Split a big task into smaller jobs you can solve one by one.</p>
@@ -94,9 +94,8 @@
           <div class="story-text">
             <p class="story-highlight">Class VIII learning path</p>
             <p>
-              These modules follow the Computational Thinking chapters of the CBSE Class VIII student handbook:
-              squares and cubes, powers, number systems, quadrilaterals, divisibility puzzles,
-              distribution expressions, and proportional reasoning.
+            These modules are aligned with CBSE Class VIII Computational Thinking concepts, 
+            covering topics such as squares and cubes, powers, number systems, quadrilaterals, divisibility puzzles, distribution expressions, and proportional reasoning.
             </p>
           </div>
           <img class="module-banner" src="assets/ct8-toolkit.png" alt="Class 8 computational thinking activity kit" />
@@ -135,6 +134,7 @@
         <section class="question-panel">
           <p id="question-count" class="question-count"></p>
           <h3 id="question-text"></h3>
+          <div id="question-figure" class="question-figure" hidden></div>
           <div id="answer-options" class="answer-options"></div>
           <button id="pattern-hint-button" class="hint-button" type="button" hidden>Show hint</button>
           <div id="question-clue" class="question-clue"></div>
@@ -161,6 +161,13 @@
       </section>
     </main>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+    <script src="modules/index.js"></script>
+    <script src="sketches/figures.js"></script>
+    <script src="sketches/squares-cubes.js"></script>
+    <script src="sketches/number-systems.js"></script>
+    <script src="sketches/quadrilaterals.js"></script>
+    <script src="sketches/index.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
