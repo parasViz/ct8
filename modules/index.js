@@ -7,24 +7,25 @@ window.CT8.modules = [
     "skill": "perfect powers",
     "theme": "blue",
     "visual": "geometry",
-    "intro": "Squares and cubes reveal number patterns, grid structures, and factor rules. The trick is to connect the visual model with the exponent form.",
+    "intro": "Numbers can take the shape of a square or a cube! 4 × 4 makes a perfect square (16, a 4-by-4 grid). 3 × 3 × 3 makes a perfect cube (27, a 3-by-3-by-3 block). In this module you'll spot the patterns hiding inside numbers, hunt for the rare ones that are both square and cube — like 64 — and learn tricks that turn hard problems into one-line answers.",
     "lessons": [
       {
         "title": "Perfect Squares",
-        "text": "A perfect square can be arranged as an n by n square."
+        "text": "A number times itself. 4 × 4 = 16, so 16 fills a 4-by-4 grid exactly. Try it: 1, 4, 9, 16, 25 …"
       },
       {
         "title": "Perfect Cubes",
-        "text": "A perfect cube can be arranged as an n by n by n block."
+        "text": "A number times itself, three times. 3 × 3 × 3 = 27, so 27 stacks into a 3-by-3-by-3 block. Cubes grow fast: 1, 8, 27, 64, 125 …"
       },
       {
-        "title": "Factor Completion",
-        "text": "To make a product a perfect cube, every prime factor needs a multiple of three as its exponent."
+        "title": "Spot the Trick",
+        "text": "Break a number into its building blocks to check if it's a square or cube. Then spot shortcuts — like 50² − 49² = 50 + 49 = 99. Patterns make math fast."
       }
     ],
     "activity": {
       "title": "Power Builder",
       "prompt": "Break the number into factors, then rebuild it as a square or cube.",
+      "tip": "When a problem asks you to square or cube something, try picturing it as an actual square grid or cube stack — the shape often makes the structure obvious and points you to the solution.",
       "chips": [
         {
           "title": "12 squared",
@@ -346,6 +347,7 @@ window.CT8.modules = [
     "activity": {
       "title": "Exponent Sort",
       "prompt": "Convert enough of each expression to compare it correctly.",
+      "hideCard": true,
       "chips": [
         {
           "title": "2^5",
@@ -388,15 +390,24 @@ window.CT8.modules = [
         "clue": "Multiply by 5, then subtract 4."
       },
       {
-        "text": "What is 2^5?",
+        "text": "The Pattern Breaker",
+        "format": {
+          "title": "The Pattern Breaker",
+          "intro": "Look at the following series:",
+          "equations": [
+            "7, 50, 344, 2402, ?"
+          ],
+          "ask": "Identify the logic used to generate the next number. What is the value of the missing term?"
+        },
         "options": [
-          "10",
-          "16",
-          "25",
-          "32"
+          "16807",
+          "16808",
+          "2403",
+          "16814"
         ],
-        "answer": 3,
-        "clue": "2 x 2 x 2 x 2 x 2."
+        "answer": 1,
+        "hint": "Think about powers of 7 and how they relate to these numbers.",
+        "clue": "50 = 7^2 + 1, 344 = 7^3 + 1, and 2402 = 7^4 + 1. So the next term is 7^5 + 1 = 16808."
       },
       {
         "text": "Arrange 3^2, 2^4, and 5^2 in ascending value.",
@@ -440,40 +451,153 @@ window.CT8.modules = [
           "30"
         ],
         "answer": 2,
+        "animation": {
+          "type": "owlTreePairs",
+          "title": "One owl choice with one tree choice",
+          "owls": 4,
+          "trees": 6
+        },
+        "hint": [
+          {
+            "label": "Step 1",
+            "text": "Pick one owl first. That owl can pair with any of the 6 trees."
+          },
+          {
+            "label": "Step 2",
+            "text": "There are 4 owls, so make 4 rows of 6 tree choices."
+          },
+          {
+            "label": "Step 3",
+            "text": "Count the rows by multiplying: 4 x 6."
+          }
+        ],
         "clue": "Use 4 x 6."
       },
       {
-        "text": "What is 3^5?",
+        "text": "Find the two-digit number AB",
+        "format": {
+          "type": "digitClues",
+          "title": "Find the two-digit number AB",
+          "intro": "AB is one two-digit number, not A x B. For example, if A = 4 and B = 6, then AB = 46.",
+          "rangeLabel": "The square of AB is between:",
+          "range": "2000 < (AB)^2 < 3000",
+          "cluesTitle": "Use all three clues:",
+          "clues": [
+            {
+              "label": "1",
+              "text": "A + B is even."
+            },
+            {
+              "label": "2",
+              "text": "The square (AB)^2 ends with the same last digit as AB."
+            },
+            {
+              "label": "3",
+              "text": "The tens digit A is even."
+            }
+          ],
+          "ask": "Which option is the value of AB?"
+        },
         "options": [
-          "81",
-          "125",
-          "243",
-          "729"
+          "46",
+          "48",
+          "52",
+          "54"
         ],
-        "answer": 2,
-        "clue": "3 x 3 x 3 x 3 x 3."
+        "answer": 0,
+        "hint": "First find numbers whose squares lie between 2000 and 3000. Then test the digit-sum, last-digit, and tens-digit clues.",
+        "clue": "46^2 = 2116, 4 + 6 = 10 is even, 2116 ends in 6, and the tens digit 4 is even."
       },
       {
-        "text": "What is (2^3)^2?",
+        "text": "The Science Fair Committee",
+        "format": {
+          "type": "committeeRules",
+          "title": "The Science Fair Committee",
+          "intro": "Choose a 3-person committee from these students:",
+          "people": [
+            "Maya",
+            "Noah",
+            "Olivia",
+            "Paul",
+            "Quinn",
+            "Riley"
+          ],
+          "badge": "Choose 3",
+          "rules": [
+            "Maya and Noah must either both be chosen or both left out.",
+            "Paul and Olivia cannot be on the same committee.",
+            "If Quinn is chosen, Riley must also be chosen."
+          ],
+          "ask": "How many different valid committees can be formed?"
+        },
         "options": [
-          "32",
-          "48",
-          "64",
-          "128"
+          "1",
+          "2",
+          "3",
+          "5"
         ],
-        "answer": 2,
-        "clue": "2^3 is 8, and 8 squared is 64."
+        "answer": 3,
+        "hint": "Split into cases: Maya and Noah together, or Maya and Noah both absent. Then apply the Olivia-Paul and Quinn-Riley rules.",
+        "clue": "With Maya and Noah together: MNO, MNP, MNR = 3 committees. With both absent: OQR and PQR = 2 committees. Total = 5."
       },
       {
         "text": "Which is greatest?",
         "options": [
-          "2^6",
-          "3^4",
-          "4^3",
-          "5^2"
+          "5^4",
+          "2^8",
+          "3^6",
+          "4^4"
         ],
-        "answer": 1,
-        "clue": "The values are 64, 81, 64, and 25."
+        "answer": 2,
+        "animation": {
+          "type": "powerSquareCompare",
+          "title": "Compare powers as square sides",
+          "items": [
+            {
+              "label": "A",
+              "power": "5^4",
+              "split": "5^2 x 5^2",
+              "square": "25 x 25",
+              "side": 25
+            },
+            {
+              "label": "B",
+              "power": "2^8",
+              "split": "2^4 x 2^4",
+              "square": "16 x 16",
+              "side": 16
+            },
+            {
+              "label": "C",
+              "power": "3^6",
+              "split": "3^3 x 3^3",
+              "square": "27 x 27",
+              "side": 27
+            },
+            {
+              "label": "D",
+              "power": "4^4",
+              "split": "4^2 x 4^2",
+              "square": "16 x 16",
+              "side": 16
+            }
+          ]
+        },
+        "hint": [
+          {
+            "label": "Square trick",
+            "text": "Break each power into two equal parts, like making a square."
+          },
+          {
+            "label": "Compare",
+            "text": "5^4 = 5^2 x 5^2 = 25 x 25. 2^8 = 2^4 x 2^4 = 16 x 16."
+          },
+          {
+            "label": "Finish",
+            "text": "3^6 = 3^3 x 3^3 = 27 x 27, and 4^4 = 4^2 x 4^2 = 16 x 16. The biggest side is 27."
+          }
+        ],
+        "clue": "The values are 625, 256, 729, and 256."
       },
       {
         "text": "A bag capacity is 2^4 units. How many units is that?",
@@ -516,24 +640,26 @@ window.CT8.modules = [
       }
     ],
     "activity": {
-      "title": "Measure in Bases",
-      "prompt": "Represent the same height using different pipe lengths and allowed digits.",
-      "chips": [
+      "label": "Quick facts",
+      "title": "Why Number Bases Matter",
+      "prompt": "The same quantity can be written in many bases. Different bases became useful for different reasons.",
+      "hideVisual": true,
+      "facts": [
         {
-          "title": "66 decimal",
-          "text": "66 uses six tens and six ones."
+          "title": "Why do people use base 10?",
+          "text": "Because humans usually count with ten fingers. Groups of ten became natural for counting, trade, money, measurement, and place value."
         },
         {
-          "title": "66 binary",
-          "text": "66 = 64 + 2."
+          "title": "Why do computers use base 2?",
+          "text": "Computer circuits are easiest to make reliable with two states: off/on or low/high voltage. Those two states are represented as 0 and 1."
         },
         {
-          "title": "66 ternary",
-          "text": "66 = 2 x 27 + 1 x 9 + 1 x 3."
+          "title": "Why do programmers use base 16?",
+          "text": "Hexadecimal is a short way to write binary. One hex digit matches exactly four binary bits, so long 0-1 patterns become easier to read."
         },
         {
-          "title": "Base rule",
-          "text": "Base n allows digits from 0 to n - 1."
+          "title": "Does the value change?",
+          "text": "No. The value stays the same; only the representation changes. For example, decimal 10 is written as 1010 in binary."
         }
       ]
     },
@@ -1187,15 +1313,26 @@ window.CT8.modules = [
     ],
     "quiz": [
       {
-        "text": "What is 6(3 + 4)?",
+        "text": "Weighing Scale Logic",
+        "format": {
+          "title": "Weighing Scale Logic",
+          "intro": "On a weighing scale, both a and b are whole numbers.",
+          "ask": "Which conclusion is logically correct?"
+        },
+        "figure": {
+          "type": "image",
+          "src": "assets/scale-expression-balance.svg",
+          "alt": "A weighing scale with left side expression (a - b) squared and right side expression a squared minus b squared"
+        },
         "options": [
-          "24",
-          "36",
-          "42",
-          "54"
+          "The scale can balance only when b = 0 or a = b",
+          "The scale can balance for any values of a and b",
+          "The scale can balance only when a = b = 0",
+          "The scale can never balance"
         ],
-        "answer": 2,
-        "clue": "6 x 7 = 42."
+        "answer": 0,
+        "hint": "Expand both sides and compare what must be true for them to be equal.",
+        "clue": "(a - b)^2 = a^2 - 2ab + b^2. Balance means a^2 - 2ab + b^2 = a^2 - b^2, so 2b(b - a) = 0. Therefore b = 0 or a = b."
       },
       {
         "text": "Simplify (a + b)(c + d) - (a - b)(c - d).",
@@ -1362,6 +1499,19 @@ window.CT8.modules = [
           "4:3"
         ],
         "answer": 1,
+        "animation": {
+          "type": "ratioCompare",
+          "title": "Stack each fruit against an apple",
+          "units": [
+            { "label": "apples", "count": 1, "tone": "pink" },
+            { "label": "bananas", "count": 2, "tone": "yellow" },
+            { "label": "strawberries", "count": 3, "tone": "orange" }
+          ],
+          "compare": [1, 2],
+          "unitLabel": "apple",
+          "intro": "1 apple = 1 unit. Bananas = 2 units, strawberries = 3 units.",
+          "answer": "Bananas : Strawberries = 2 : 3"
+        },
         "clue": "Use apples as one common unit."
       },
       {
@@ -1373,6 +1523,17 @@ window.CT8.modules = [
           "24"
         ],
         "answer": 2,
+        "animation": {
+          "type": "ratioScale",
+          "title": "Scale A:B = 2:5 until A = 8",
+          "from": [2, 5],
+          "to": [8, 20],
+          "factor": 4,
+          "labels": ["A", "B"],
+          "fromCaption": "2 : 5",
+          "toCaption": "8 : 20",
+          "answer": "B = 20"
+        },
         "clue": "The scale factor from 2 to 8 is 4."
       },
       {
@@ -1384,6 +1545,17 @@ window.CT8.modules = [
           "35 litres"
         ],
         "answer": 2,
+        "animation": {
+          "type": "ratioBar",
+          "title": "Split 50 L in the ratio 3:2",
+          "parts": [
+            { "label": "milk", "count": 3, "tone": "pink" },
+            { "label": "water", "count": 2, "tone": "blue" }
+          ],
+          "totalValue": 50,
+          "unit": " L",
+          "highlight": 0
+        },
         "clue": "There are 5 total parts, each worth 10 litres."
       },
       {
@@ -1395,6 +1567,18 @@ window.CT8.modules = [
           "40 litres"
         ],
         "answer": 1,
+        "animation": {
+          "type": "ratioScale",
+          "title": "Grow water until milk : water = 1 : 1",
+          "from": [40, 20],
+          "to": [40, 40],
+          "labels": ["milk", "water"],
+          "fromCaption": "40 : 20 (now)",
+          "toCaption": "40 : 40 (target)",
+          "arrowText": "+ 20 L water",
+          "stepText": "Milk stays at 40 L, so water has to climb from <strong>20</strong> to <strong>40</strong>.",
+          "answer": "Add 20 L of water"
+        },
         "clue": "Water must become 40 litres."
       },
       {
@@ -1406,6 +1590,17 @@ window.CT8.modules = [
           "6:4"
         ],
         "answer": 1,
+        "animation": {
+          "type": "ratioScale",
+          "title": "Simplify 4 : 6",
+          "from": [4, 6],
+          "to": [2, 3],
+          "factor": 0.5,
+          "labels": ["a", "b"],
+          "fromCaption": "4 : 6",
+          "toCaption": "2 : 3",
+          "answer": "4 : 6 = 2 : 3"
+        },
         "clue": "Divide both terms by 2."
       },
       {
@@ -1417,6 +1612,18 @@ window.CT8.modules = [
           "25"
         ],
         "answer": 1,
+        "animation": {
+          "type": "ratioBar",
+          "title": "Split 45 in the ratio 2:3:4",
+          "parts": [
+            { "label": "youngest", "count": 2, "tone": "teal" },
+            { "label": "middle", "count": 3, "tone": "orange" },
+            { "label": "oldest", "count": 4, "tone": "indigo" }
+          ],
+          "totalValue": 45,
+          "unit": "",
+          "highlight": 1
+        },
         "clue": "The 9 total parts are worth 5 each."
       },
       {
@@ -1428,6 +1635,18 @@ window.CT8.modules = [
           "12:1"
         ],
         "answer": 0,
+        "animation": {
+          "type": "ratioScale",
+          "title": "Per dozen → per fruit",
+          "from": [3, 5],
+          "to": [3, 5],
+          "labels": ["apple", "mango"],
+          "fromCaption": "per dozen — 3 : 5",
+          "toCaption": "per fruit — 3 : 5",
+          "arrowText": "÷ 12 each side",
+          "stepText": "Dividing <strong>both</strong> prices by 12 leaves the ratio unchanged.",
+          "answer": "Price per fruit ratio = 3 : 5"
+        },
         "clue": "Dividing both dozen prices by 12 preserves the ratio."
       },
       {
@@ -1439,6 +1658,17 @@ window.CT8.modules = [
           "6"
         ],
         "answer": 1,
+        "animation": {
+          "type": "ratioScale",
+          "title": "Scale A:C = 1:2 until A = 2",
+          "from": [1, 2],
+          "to": [2, 4],
+          "factor": 2,
+          "labels": ["A", "C"],
+          "fromCaption": "1 : 2",
+          "toCaption": "2 : 4",
+          "answer": "C is at position 4"
+        },
         "clue": "Double 2 to preserve 1:2."
       },
       {
@@ -1450,6 +1680,17 @@ window.CT8.modules = [
           "40"
         ],
         "answer": 2,
+        "animation": {
+          "type": "ratioScale",
+          "title": "Scale 1:5 until the first term is 7",
+          "from": [1, 5],
+          "to": [7, 35],
+          "factor": 7,
+          "labels": ["hour", "minute"],
+          "fromCaption": "1 : 5",
+          "toCaption": "7 : 35",
+          "answer": "MM = 35"
+        },
         "clue": "7:35 equals 1:5."
       },
       {
@@ -1461,6 +1702,25 @@ window.CT8.modules = [
           "8:5"
         ],
         "answer": 0,
+        "animation": {
+          "type": "ratioChain",
+          "title": "Chain x:y and y:z through the shared y",
+          "parts": [
+            { "label": "x", "value": 2, "tone": "pink" },
+            { "label": "y", "value": 5, "tone": "orange" },
+            { "label": "z", "value": 8, "tone": "indigo" }
+          ],
+          "phases": [
+            { "highlight": [0, 1], "label": "x : y = 2 : 5" },
+            { "highlight": [1, 2], "label": "y : z = 5 : 8" }
+          ],
+          "finalPhase": {
+            "highlight": [0, 2],
+            "label": "x : z = 2 : 8",
+            "note": "Because y is <strong>5</strong> in both ratios, the chain links: x : y : z = <strong>2 : 5 : 8</strong>."
+          },
+          "answer": "x : z = 2 : 8"
+        },
         "clue": "The shared y value is 5, so x:z is 2:8."
       }
     ]

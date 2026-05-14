@@ -3,6 +3,7 @@ const modules = ct8.modules || [];
 const sketches = ct8.sketches || {};
 const createQuestionAnimation = sketches.createQuestionAnimation || (() => ({ destroy() {} }));
 const getQuestionFigureMarkup = sketches.getQuestionFigureMarkup || (() => "");
+const createActivityVisual = sketches.createActivityVisual || (() => ({ destroy() {} }));
 
 const moduleIds = new Set(modules.map((module) => module.id));
 const STORAGE_KEY = "ct8-completed-modules";
@@ -17,10 +18,19 @@ let currentModuleIndex = 0;
 let quizIndex = 0;
 let quizScore = 0;
 let answered = false;
+let selectedAnswers = new Set();
 let completedModules = readCompleted();
 let activeHintAnimation = null;
+let activeActivityVisual = null;
 let hintRenderToken = 0;
 
+
+function destroyActivityVisual() {
+  if (activeActivityVisual) {
+    activeActivityVisual.destroy();
+    activeActivityVisual = null;
+  }
+}
 
 function destroyPatternVisual() {
   hintRenderToken += 1;
@@ -35,6 +45,32 @@ function destroyPatternVisual() {
     host.innerHTML = "";
     host.hidden = true;
   }
+}
+
+function appendFormattedMathText(parent, value) {
+  const text = String(value || "");
+  const exponentPattern = /([A-Za-z0-9]|\))\^(\d+)/g;
+  let cursor = 0;
+  let match;
+
+  function appendPlain(plain) {
+    if (!plain) {
+      return;
+    }
+    parent.append(document.createTextNode(plain.replace(/\s+x\s+/gi, " × ")));
+  }
+
+  while ((match = exponentPattern.exec(text)) !== null) {
+    appendPlain(text.slice(cursor, match.index));
+    parent.append(document.createTextNode(match[1]));
+
+    const sup = document.createElement("sup");
+    sup.textContent = match[2];
+    parent.append(sup);
+    cursor = exponentPattern.lastIndex;
+  }
+
+  appendPlain(text.slice(cursor));
 }
 
 function setQuestionClueContent(clue, content, mode = "") {
@@ -55,7 +91,7 @@ function setQuestionClueContent(clue, content, mode = "") {
   const steps = Array.isArray(content) ? content : hasRichHint ? content.steps : null;
 
   if (!steps && !hasRichHint) {
-    clue.textContent = content;
+    appendFormattedMathText(clue, content);
     return;
   }
 
@@ -88,7 +124,7 @@ function setQuestionClueContent(clue, content, mode = "") {
 
     const text = document.createElement("span");
     text.className = "hint-step-text";
-    text.textContent = step.text || step;
+    appendFormattedMathText(text, step.text || step);
 
     row.append(badge, text);
     clue.append(row);
@@ -284,7 +320,35 @@ function openModule(index) {
 }
 
 function renderModule(index) {
+  destroyActivityVisual();
   const module = modules[index];
+  const hasActivityVisual = !module.activity.hideVisual;
+  const hasActivityCard = !module.activity.hideCard;
+  const activityFacts = module.activity.facts || [];
+  const hasActivityFacts = activityFacts.length > 0;
+  const activityContent = hasActivityFacts
+    ? `
+        <div class="activity-facts">
+          ${activityFacts
+            .map(
+              (item) => `
+              <article class="activity-fact">
+                <h4>${item.title}</h4>
+                <p>${item.text}</p>
+              </article>
+            `
+            )
+            .join("")}
+        </div>
+      `
+    : `
+        <div class="activity-chips">
+          ${(module.activity.chips || [])
+            .map((item, chipIndex) => `<button class="activity-chip" type="button" data-chip="${chipIndex}">${item.title}</button>`)
+            .join("")}
+        </div>
+        <div id="activity-detail" class="activity-detail"></div>
+      `;
   document.querySelector("#module-kicker").textContent = `Module ${index + 1} - ${module.skill}`;
   document.querySelector("#module-title").textContent = module.title;
 
@@ -337,19 +401,16 @@ function renderModule(index) {
         .join("")}
     </div>
 
-    <div class="story-card activity-lab">
-      <div class="activity-visual visual-${module.visual}" aria-hidden="true"></div>
+    <div class="story-card activity-lab${hasActivityVisual ? "" : " activity-lab-no-visual"}${hasActivityCard ? "" : " activity-lab-no-card"}">
+      ${hasActivityVisual ? `<div class="activity-visual visual-${module.visual}" aria-hidden="true"></div>` : ""}
+      ${hasActivityCard ? `
       <div class="activity-card">
-        <p class="story-highlight">Try this</p>
+        <p class="story-highlight">${module.activity.label || (hasActivityFacts ? "Quick facts" : "Try this")}</p>
         <h3>${module.activity.title}</h3>
         <p>${module.activity.prompt}</p>
-        <div class="activity-chips">
-          ${module.activity.chips
-            .map((item, chipIndex) => `<button class="activity-chip" type="button" data-chip="${chipIndex}">${item.title}</button>`)
-            .join("")}
-        </div>
-        <div id="activity-detail" class="activity-detail"></div>
-      </div>
+        ${module.activity.tip ? `<aside class="activity-tip"><span class="activity-tip-label">Visualize it</span><p>${module.activity.tip}</p></aside>` : ""}
+        ${activityContent}
+      </div>` : ""}
     </div>
 
     <div class="story-card">
@@ -372,6 +433,9 @@ function renderModule(index) {
   `;
 
   bindActivityChips(module);
+  if (hasActivityVisual) {
+    activeActivityVisual = createActivityVisual(body.querySelector(".activity-visual"), module);
+  }
 
   const previousButton = document.querySelector("#previous-module");
   const nextButton = document.querySelector("#next-module");
@@ -382,9 +446,14 @@ function renderModule(index) {
 function bindActivityChips(module) {
   const chips = document.querySelectorAll(".activity-chip");
   const detail = document.querySelector("#activity-detail");
+  const activityChips = module.activity.chips || [];
+
+  if (!chips.length || !detail || !activityChips.length) {
+    return;
+  }
 
   function activate(chipIndex) {
-    const item = module.activity.chips[chipIndex];
+    const item = activityChips[chipIndex];
     detail.textContent = item.text;
     chips.forEach((chipButton) => {
       chipButton.classList.toggle("active", Number(chipButton.dataset.chip) === chipIndex);
@@ -402,6 +471,7 @@ function startQuiz() {
   quizIndex = 0;
   quizScore = 0;
   answered = false;
+  selectedAnswers = new Set();
   renderQuestion();
   showSection("section-quiz");
   setActiveNav(String(currentModuleIndex));
@@ -410,7 +480,9 @@ function startQuiz() {
 function renderQuestion() {
   const module = modules[currentModuleIndex];
   const question = module.quiz[quizIndex];
+  const isMultiAnswer = Array.isArray(question.answer);
   answered = false;
+  selectedAnswers = new Set();
 
   document.querySelector("#quiz-module-kicker").textContent = `Module ${currentModuleIndex + 1}`;
   document.querySelector("#quiz-title").textContent = module.title;
@@ -419,7 +491,9 @@ function renderQuestion() {
   renderQuestionText(question);
   document.querySelector("#feedback").textContent = "";
   document.querySelector("#feedback").className = "feedback";
-  document.querySelector("#next-question").disabled = true;
+  const nextQuestion = document.querySelector("#next-question");
+  nextQuestion.disabled = true;
+  nextQuestion.textContent = isMultiAnswer ? "Check" : "Next";
 
   const clue = document.querySelector("#question-clue");
   setQuestionClueContent(clue, question.clue || "Think about the rule, then test each option.");
@@ -443,9 +517,12 @@ function renderQuestion() {
 
     const optionText = document.createElement("span");
     optionText.className = "option-text";
-    optionText.textContent = option;
+    appendFormattedMathText(optionText, option);
 
     button.append(optionLetter, optionText);
+    if (isMultiAnswer) {
+      button.setAttribute("aria-pressed", "false");
+    }
     button.addEventListener("click", () => chooseAnswer(optionIndex));
     answerOptions.appendChild(button);
   });
@@ -459,7 +536,7 @@ function renderQuestionText(question) {
     : "";
 
   if (!question.format) {
-    questionText.textContent = question.text;
+    appendFormattedMathText(questionText, question.text);
     return;
   }
 
@@ -483,6 +560,16 @@ function renderQuestionText(question) {
     return;
   }
 
+  if (question.format.type === "digitClues") {
+    renderDigitCluesQuestion(questionText, question.format);
+    return;
+  }
+
+  if (question.format.type === "committeeRules") {
+    renderCommitteeRulesQuestion(questionText, question.format);
+    return;
+  }
+
   const title = document.createElement("span");
   title.className = "question-title-line";
   title.textContent = question.format.title;
@@ -491,19 +578,138 @@ function renderQuestionText(question) {
   intro.className = "question-intro-line";
   intro.textContent = question.format.intro;
 
+  const hasEquations = Array.isArray(question.format.equations) && question.format.equations.length > 0;
   const mathBlock = document.createElement("span");
   mathBlock.className = "question-math-block";
-  question.format.equations.forEach((equation) => {
-    const line = document.createElement("span");
-    line.textContent = equation;
-    mathBlock.append(line);
-  });
+  if (hasEquations) {
+    question.format.equations.forEach((equation) => {
+      const line = document.createElement("span");
+      appendFormattedMathText(line, equation);
+      mathBlock.append(line);
+    });
+  }
 
   const ask = document.createElement("span");
   ask.className = "question-ask-line";
-  ask.textContent = question.format.ask;
+  appendFormattedMathText(ask, question.format.ask);
 
-  questionText.append(title, intro, mathBlock, ask);
+  questionText.append(title, intro);
+  if (hasEquations) {
+    questionText.append(mathBlock);
+  }
+  questionText.append(ask);
+}
+
+function renderDigitCluesQuestion(questionText, format) {
+  const title = document.createElement("span");
+  title.className = "question-title-line";
+  title.textContent = format.title;
+
+  const card = document.createElement("span");
+  card.className = "digit-question-card";
+
+  const intro = document.createElement("span");
+  intro.className = "digit-meaning";
+  const introLabel = document.createElement("strong");
+  introLabel.textContent = "What AB means";
+  const introText = document.createElement("span");
+  appendFormattedMathText(introText, format.intro);
+  intro.append(introLabel, introText);
+
+  const rangeRow = document.createElement("span");
+  rangeRow.className = "digit-range-row";
+  const rangeLabel = document.createElement("span");
+  rangeLabel.textContent = format.rangeLabel || "The square of AB is between:";
+  const range = document.createElement("strong");
+  range.className = "digit-clue-range";
+  appendFormattedMathText(range, format.range);
+  rangeRow.append(rangeLabel, range);
+
+  const cluesTitle = document.createElement("span");
+  cluesTitle.className = "digit-clues-title";
+  cluesTitle.textContent = format.cluesTitle || "Use the clues:";
+
+  const clueList = document.createElement("span");
+  clueList.className = "digit-clue-list";
+  format.clues.forEach((clue) => {
+    const clueRow = document.createElement("span");
+    clueRow.className = "digit-clue-row";
+
+    const label = document.createElement("strong");
+    label.textContent = clue.label;
+
+    const text = document.createElement("span");
+    appendFormattedMathText(text, clue.text);
+
+    clueRow.append(label, text);
+    clueList.append(clueRow);
+  });
+
+  card.append(intro, rangeRow, cluesTitle, clueList);
+
+  const ask = document.createElement("span");
+  ask.className = "question-ask-line";
+  appendFormattedMathText(ask, format.ask);
+
+  questionText.append(title, card, ask);
+}
+
+function renderCommitteeRulesQuestion(questionText, format) {
+  const title = document.createElement("span");
+  title.className = "question-title-line";
+  title.textContent = format.title;
+
+  const card = document.createElement("span");
+  card.className = "committee-question-card";
+
+  const top = document.createElement("span");
+  top.className = "committee-top-row";
+
+  const intro = document.createElement("span");
+  intro.className = "committee-intro";
+  intro.textContent = format.intro;
+
+  const badge = document.createElement("strong");
+  badge.className = "committee-badge";
+  badge.textContent = format.badge || "Choose 3";
+
+  top.append(intro, badge);
+
+  const people = document.createElement("span");
+  people.className = "committee-people";
+  format.people.forEach((name) => {
+    const chip = document.createElement("span");
+    chip.textContent = name;
+    people.append(chip);
+  });
+
+  const rulesTitle = document.createElement("span");
+  rulesTitle.className = "committee-rules-title";
+  rulesTitle.textContent = "Rules";
+
+  const rules = document.createElement("span");
+  rules.className = "committee-rules";
+  format.rules.forEach((rule, index) => {
+    const row = document.createElement("span");
+    row.className = "committee-rule-row";
+
+    const number = document.createElement("strong");
+    number.textContent = index + 1;
+
+    const text = document.createElement("span");
+    text.textContent = rule;
+
+    row.append(number, text);
+    rules.append(row);
+  });
+
+  card.append(top, people, rulesTitle, rules);
+
+  const ask = document.createElement("span");
+  ask.className = "question-ask-line";
+  ask.textContent = format.ask;
+
+  questionText.append(title, card, ask);
 }
 
 function renderQuestionFigure(question) {
@@ -852,10 +1058,15 @@ function chooseAnswer(optionIndex) {
   if (answered) {
     return;
   }
-  answered = true;
 
   const module = modules[currentModuleIndex];
   const question = module.quiz[quizIndex];
+  if (Array.isArray(question.answer)) {
+    toggleMultiAnswer(optionIndex);
+    return;
+  }
+
+  answered = true;
   const buttons = document.querySelectorAll(".answer-option");
   const feedback = document.querySelector("#feedback");
 
@@ -885,8 +1096,75 @@ function chooseAnswer(optionIndex) {
   document.querySelector("#next-question").disabled = false;
 }
 
+function toggleMultiAnswer(optionIndex) {
+  const buttons = document.querySelectorAll(".answer-option");
+  const nextQuestion = document.querySelector("#next-question");
+
+  if (selectedAnswers.has(optionIndex)) {
+    selectedAnswers.delete(optionIndex);
+  } else {
+    selectedAnswers.add(optionIndex);
+  }
+
+  buttons[optionIndex].classList.toggle("selected", selectedAnswers.has(optionIndex));
+  buttons[optionIndex].setAttribute("aria-pressed", String(selectedAnswers.has(optionIndex)));
+  nextQuestion.disabled = selectedAnswers.size === 0;
+}
+
+function checkMultiAnswer() {
+  const module = modules[currentModuleIndex];
+  const question = module.quiz[quizIndex];
+  const correctAnswers = new Set(question.answer);
+  const buttons = document.querySelectorAll(".answer-option");
+  const feedback = document.querySelector("#feedback");
+  const chosenAnswers = new Set(selectedAnswers);
+  const isCorrect =
+    chosenAnswers.size === correctAnswers.size &&
+    [...chosenAnswers].every((answerIndex) => correctAnswers.has(answerIndex));
+
+  answered = true;
+  buttons.forEach((button, index) => {
+    button.disabled = true;
+    button.classList.remove("selected");
+    button.setAttribute("aria-pressed", String(chosenAnswers.has(index)));
+
+    if (correctAnswers.has(index)) {
+      button.classList.add("correct");
+    } else if (chosenAnswers.has(index)) {
+      button.classList.add("wrong");
+    }
+  });
+
+  if (isCorrect) {
+    quizScore += 1;
+    feedback.textContent = "Correct. You found all matching choices.";
+    feedback.classList.add("good");
+  } else {
+    const correctLabels = question.answer
+      .map((answerIndex) => question.options[answerIndex])
+      .join(" and ");
+    feedback.textContent = `Not quite. The answers are ${correctLabels}.`;
+    feedback.classList.add("try");
+    const clue = document.querySelector("#question-clue");
+    setQuestionClueContent(clue, question.clue || "Think about the rule, then test each option.", "answer");
+    clue.classList.add("show");
+  }
+
+  document.querySelector("#quiz-score").textContent = quizScore;
+  const nextQuestion = document.querySelector("#next-question");
+  nextQuestion.textContent = "Next";
+  nextQuestion.disabled = false;
+}
+
 function goToNextQuestion() {
   const module = modules[currentModuleIndex];
+  const question = module.quiz[quizIndex];
+
+  if (Array.isArray(question.answer) && !answered) {
+    checkMultiAnswer();
+    return;
+  }
+
   if (quizIndex < module.quiz.length - 1) {
     quizIndex += 1;
     renderQuestion();
@@ -963,7 +1241,89 @@ function bindControls() {
   });
 }
 
+function createImagePreviewModal() {
+  const modal = document.createElement("div");
+  modal.className = "image-preview-modal";
+  modal.hidden = true;
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-modal", "true");
+  modal.setAttribute("aria-label", "Image preview");
+
+  const backdrop = document.createElement("button");
+  backdrop.className = "image-preview-backdrop";
+  backdrop.type = "button";
+  backdrop.setAttribute("aria-label", "Close image preview");
+
+  const panel = document.createElement("div");
+  panel.className = "image-preview-panel";
+
+  const closeButton = document.createElement("button");
+  closeButton.className = "image-preview-close";
+  closeButton.type = "button";
+  closeButton.textContent = "Close";
+
+  const previewImage = document.createElement("img");
+  previewImage.decoding = "async";
+
+  const caption = document.createElement("p");
+  caption.className = "image-preview-caption";
+
+  panel.append(closeButton, previewImage, caption);
+  modal.append(backdrop, panel);
+  document.body.append(modal);
+
+  let previousFocus = null;
+
+  const close = () => {
+    modal.hidden = true;
+    document.body.classList.remove("modal-open");
+    previewImage.removeAttribute("src");
+    if (previousFocus) {
+      previousFocus.focus();
+    }
+  };
+
+  const open = (sourceImage) => {
+    previousFocus = document.activeElement;
+    previewImage.src = sourceImage.src;
+    previewImage.alt = sourceImage.alt || "Preview image";
+    caption.textContent = sourceImage.alt || "";
+    modal.hidden = false;
+    document.body.classList.add("modal-open");
+    closeButton.focus();
+  };
+
+  backdrop.addEventListener("click", close);
+  closeButton.addEventListener("click", close);
+  document.addEventListener("keydown", (event) => {
+    if (!modal.hidden && event.key === "Escape") {
+      close();
+    }
+  });
+
+  return { open };
+}
+
+function bindThinkingImagePreview() {
+  const previewModal = createImagePreviewModal();
+
+  document.querySelectorAll(".thinking-picture img").forEach((image) => {
+    image.tabIndex = 0;
+    image.setAttribute("role", "button");
+    image.setAttribute("aria-label", `Open ${image.alt || "image"} preview`);
+
+    image.addEventListener("click", () => previewModal.open(image));
+    image.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        previewModal.open(image);
+      }
+    });
+  });
+}
+
 renderNav();
 renderModuleGrid();
 bindControls();
+bindThinkingImagePreview();
 updateCompletedView();

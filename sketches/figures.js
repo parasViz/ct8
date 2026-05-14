@@ -11,9 +11,18 @@ function quadrilateralGridFigureMarkup() {
   `;
 }
 
+function questionImageFigureMarkup(figure) {
+  return `
+    <article class="question-image-card" aria-label="${figure.alt || "Question image"}">
+      <img src="${figure.src}" alt="${figure.alt || "Question image"}" />
+    </article>
+  `;
+}
+
 ((root) => {
   root.sketches = root.sketches || {};
   Object.assign(root.sketches, {
-    quadrilateralGridFigureMarkup
+    quadrilateralGridFigureMarkup,
+    questionImageFigureMarkup
   });
 })(window.CT8 = window.CT8 || {});

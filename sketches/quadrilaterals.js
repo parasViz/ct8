@@ -555,12 +555,269 @@ function createQuadrilateralTessellationAnimation(host) {
   };
 }
 
+function createQuadrilateralsActivityVisual(host) {
+  const shapes = [
+    {
+      name: "Square",
+      desc: "4 equal sides, 4 right angles",
+      pts: [[-90, -90], [90, -90], [90, 90], [-90, 90]]
+    },
+    {
+      name: "Rectangle",
+      desc: "Opposite sides equal, 4 right angles",
+      pts: [[-120, -68], [120, -68], [120, 68], [-120, 68]]
+    },
+    {
+      name: "Parallelogram",
+      desc: "2 pairs of parallel sides",
+      pts: [[-95, -68], [135, -68], [95, 68], [-135, 68]]
+    },
+    {
+      name: "Rhombus",
+      desc: "4 equal sides, opposite sides parallel",
+      pts: [[0, -100], [110, 0], [0, 100], [-110, 0]]
+    },
+    {
+      name: "Trapezium",
+      desc: "Exactly 1 pair of parallel sides",
+      pts: [[-60, -78], [60, -78], [120, 78], [-120, 78]]
+    },
+    {
+      name: "Kite",
+      desc: "2 pairs of adjacent equal sides",
+      pts: [[0, -105], [82, 8], [0, 98], [-82, 8]]
+    }
+  ];
+
+  host.innerHTML = `
+    <div class="activity-p5-canvas"></div>
+    <div class="quad-morph-pills" role="tablist" aria-label="Quadrilateral families">
+      ${shapes
+        .map(
+          (s, i) =>
+            `<button class="quad-morph-pill${i === 0 ? " active" : ""}" type="button" data-shape="${i}" role="tab">${s.name}</button>`
+        )
+        .join("")}
+    </div>
+    <p class="activity-p5-hint">Watch one shape become every quadrilateral family</p>
+  `;
+
+  const canvasHost = host.querySelector(".activity-p5-canvas");
+  if (!canvasHost) {
+    return { destroy() {} };
+  }
+
+  if (!window.p5) {
+    canvasHost.innerHTML = `
+      <div class="activity-p5-fallback">
+        <strong>Quadrilaterals</strong>
+        <span>square, rectangle, parallelogram, rhombus, trapezium, kite</span>
+      </div>
+    `;
+    return { destroy() {} };
+  }
+
+  const HOLD_MS = 1500;
+  const MORPH_MS = 750;
+  const state = {
+    fromIndex: 0,
+    toIndex: 1,
+    phaseStart: 0,
+    phase: "hold",
+    userPicked: false
+  };
+
+  const pills = host.querySelectorAll(".quad-morph-pill");
+
+  function setActivePill(index) {
+    pills.forEach((pill, i) => {
+      pill.classList.toggle("active", i === index);
+    });
+  }
+
+  function jumpTo(targetIndex) {
+    state.fromIndex = state.toIndex;
+    state.toIndex = targetIndex;
+    state.phase = "morph";
+    state.phaseStart = performance.now();
+    state.userPicked = true;
+    setActivePill(targetIndex);
+  }
+
+  pills.forEach((pill) => {
+    pill.addEventListener("click", () => {
+      const target = Number(pill.dataset.shape);
+      if (target === state.toIndex && state.phase === "hold") {
+        return;
+      }
+      jumpTo(target);
+    });
+  });
+
+  const sketch = new window.p5((p) => {
+    let canvasWidth = 0;
+    let canvasHeight = 0;
+
+    function fitCanvas() {
+      canvasWidth = Math.max(320, Math.floor(canvasHost.clientWidth || host.clientWidth || 560));
+      canvasHeight = Math.max(320, Math.min(380, Math.round(canvasWidth * 0.58)));
+      p.resizeCanvas(canvasWidth, canvasHeight);
+    }
+
+    function easeInOut(t) {
+      return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    }
+
+    function tickAnimation(now) {
+      const elapsed = now - state.phaseStart;
+      if (state.phase === "hold") {
+        if (elapsed >= HOLD_MS) {
+          state.phase = "morph";
+          state.phaseStart = now;
+          state.fromIndex = state.toIndex;
+          state.toIndex = (state.toIndex + 1) % shapes.length;
+          setActivePill(state.toIndex);
+        }
+      } else if (state.phase === "morph" && elapsed >= MORPH_MS) {
+        state.phase = "hold";
+        state.phaseStart = now;
+        state.fromIndex = state.toIndex;
+      }
+    }
+
+    function currentVertices() {
+      const from = shapes[state.fromIndex].pts;
+      const to = shapes[state.toIndex].pts;
+      if (state.phase === "hold") {
+        return to.map((pt) => [pt[0], pt[1]]);
+      }
+      const raw = (performance.now() - state.phaseStart) / MORPH_MS;
+      const t = easeInOut(Math.max(0, Math.min(1, raw)));
+      return to.map((pt, i) => [
+        from[i][0] + (pt[0] - from[i][0]) * t,
+        from[i][1] + (pt[1] - from[i][1]) * t
+      ]);
+    }
+
+    function drawBackgroundGrid() {
+      p.push();
+      p.stroke(249, 88, 119, 24);
+      p.strokeWeight(1);
+      const step = 36;
+      for (let x = step; x < canvasWidth; x += step) {
+        p.line(x, 0, x, canvasHeight);
+      }
+      for (let y = step; y < canvasHeight; y += step) {
+        p.line(0, y, canvasWidth, y);
+      }
+      p.pop();
+    }
+
+    function drawShape(vertices, cx, cy) {
+      // soft shadow
+      p.push();
+      p.translate(cx + 6, cy + 14);
+      p.noStroke();
+      p.fill(190, 18, 60, 36);
+      p.beginShape();
+      vertices.forEach(([x, y]) => p.vertex(x, y));
+      p.endShape(p.CLOSE);
+      p.pop();
+
+      p.push();
+      p.translate(cx, cy);
+
+      // single light pink fill
+      p.noStroke();
+      p.fill(254, 205, 211, 245);
+      p.beginShape();
+      vertices.forEach(([x, y]) => p.vertex(x, y));
+      p.endShape(p.CLOSE);
+
+      // outline
+      p.noFill();
+      p.stroke(225, 29, 72, 230);
+      p.strokeWeight(2.4);
+      p.strokeJoin(p.ROUND);
+      p.beginShape();
+      vertices.forEach(([x, y]) => p.vertex(x, y));
+      p.endShape(p.CLOSE);
+
+      // vertex dots
+      p.fill(255, 255, 255, 255);
+      p.stroke(225, 29, 72, 230);
+      p.strokeWeight(2);
+      vertices.forEach(([x, y]) => p.circle(x, y, 9));
+
+      p.pop();
+    }
+
+    function drawLabel(cx, topY) {
+      const name = shapes[state.toIndex].name;
+      const desc = shapes[state.toIndex].desc;
+      let alpha = 255;
+      if (state.phase === "morph") {
+        const raw = (performance.now() - state.phaseStart) / MORPH_MS;
+        const fade = Math.max(0, Math.min(1, Math.abs(raw - 0.5) * 2));
+        alpha = 90 + fade * 165;
+      }
+
+      p.push();
+      p.noStroke();
+      p.textAlign(p.CENTER, p.TOP);
+      p.textStyle(p.BOLD);
+      p.textSize(20);
+      p.fill(23, 32, 52, alpha);
+      p.text(name, cx, topY);
+
+      p.textStyle(p.NORMAL);
+      p.textSize(13);
+      p.fill(100, 112, 134, alpha * 0.85);
+      p.text(desc, cx, topY + 26);
+      p.pop();
+    }
+
+    p.setup = () => {
+      fitCanvas();
+      const canvas = p.createCanvas(canvasWidth, canvasHeight);
+      canvas.parent(canvasHost);
+      p.pixelDensity(Math.min(window.devicePixelRatio || 1, 2));
+      p.frameRate(45);
+      state.phaseStart = performance.now();
+    };
+
+    p.windowResized = fitCanvas;
+
+    p.draw = () => {
+      const now = performance.now();
+      tickAnimation(now);
+
+      p.clear();
+      drawBackgroundGrid();
+
+      const cx = canvasWidth / 2;
+      const cy = canvasHeight * 0.62;
+      const verts = currentVertices();
+
+      drawShape(verts, cx, cy);
+      drawLabel(cx, 18);
+    };
+  }, canvasHost);
+
+  return {
+    destroy() {
+      sketch.remove();
+    }
+  };
+}
+
 ((root) => {
   root.sketches = root.sketches || {};
   Object.assign(root.sketches, {
     quadrilateralCounterAnimationMarkup,
     createQuadrilateralCounterAnimation,
     quadrilateralTessellationAnimationMarkup,
-    createQuadrilateralTessellationAnimation
+    createQuadrilateralTessellationAnimation,
+    createQuadrilateralsActivityVisual
   });
 })(window.CT8 = window.CT8 || {});
